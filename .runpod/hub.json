@@ -1,0 +1,11 @@
+{
+  "title": "SkyReels V1 Video Generator",
+  "description": "RunPod serverless worker for SkyReels V1 image-to-video generation. Accepts image URL and prompt, returns video as base64 MP4.",
+  "type": "serverless",
+  "category": "video",
+  "config": {
+    "runsOn": "GPU",
+    "containerDiskInGb": 40,
+    "env": []
+  }
+}

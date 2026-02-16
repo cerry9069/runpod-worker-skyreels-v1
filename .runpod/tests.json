@@ -1,0 +1,22 @@
+{
+  "tests": [
+    {
+      "name": "generate_video_i2v",
+      "input": {
+        "prompt": "A person slowly turns their head and smiles naturally",
+        "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/47/PNG_transparency_demonstration_1.png/280px-PNG_transparency_demonstration_1.png",
+        "duration": 3,
+        "width": 768,
+        "height": 1344,
+        "fps": 24,
+        "steps": 20
+      },
+      "timeout": 600000
+    }
+  ],
+  "config": {
+    "gpuTypeId": "NVIDIA A40",
+    "gpuCount": 1,
+    "allowedCudaVersions": ["12.7", "12.6", "12.5", "12.4", "12.3", "12.2", "12.1", "12.0", "11.8"]
+  }
+}
