@@ -39,7 +39,7 @@ def load_pipeline():
         cache_dir=CACHE_DIR,
     )
     PIPE.vae.enable_tiling()
-    PIPE.to("cuda")
+    PIPE.enable_model_cpu_offload()
 
     print("[skyreels] Pipeline loaded.")
     return PIPE
