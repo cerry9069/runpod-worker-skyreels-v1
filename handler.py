@@ -12,7 +12,7 @@ from io import BytesIO
 from PIL import Image
 
 PIPE = None
-CACHE_DIR = "/cache/skyreels"
+CACHE_DIR = "/cache/skyreels-v2"
 
 
 def load_pipeline():
