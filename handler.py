@@ -1,6 +1,6 @@
 """
 RunPod Serverless Handler — SkyReels V1 Video Generation (I2V)
-Uses the diffusers library with SkyReels V1 model from HuggingFace.
+Uses HunyuanSkyreelsImageToVideoPipeline from diffusers with SkyReels V1 transformer.
 """
 import os
 import runpod
@@ -21,15 +21,25 @@ def load_pipeline():
         return PIPE
 
     os.makedirs(CACHE_DIR, exist_ok=True)
-    print("[skyreels] Loading SkyReels V1 pipeline...")
+    print("[skyreels] Loading SkyReels V1 transformer...")
 
-    from diffusers import DiffusionPipeline
+    from diffusers import HunyuanSkyreelsImageToVideoPipeline, HunyuanVideoTransformer3DModel
 
-    PIPE = DiffusionPipeline.from_pretrained(
+    transformer = HunyuanVideoTransformer3DModel.from_pretrained(
         "Skywork/SkyReels-V1-Hunyuan-I2V",
+        torch_dtype=torch.bfloat16,
+        cache_dir=CACHE_DIR,
+    )
+
+    print("[skyreels] Loading HunyuanVideo base pipeline...")
+    PIPE = HunyuanSkyreelsImageToVideoPipeline.from_pretrained(
+        "hunyuanvideo-community/HunyuanVideo",
+        transformer=transformer,
         torch_dtype=torch.float16,
         cache_dir=CACHE_DIR,
-    ).to("cuda")
+    )
+    PIPE.vae.enable_tiling()
+    PIPE.to("cuda")
 
     print("[skyreels] Pipeline loaded.")
     return PIPE
@@ -52,10 +62,10 @@ def handler(event):
         return {"error": "image_url is required (SkyReels is I2V)"}
 
     duration = inp.get("duration", 5)
-    width = inp.get("width", 768)
-    height = inp.get("height", 1344)
+    width = inp.get("width", 960)
+    height = inp.get("height", 544)
     fps = inp.get("fps", 24)
-    num_frames = fps * duration
+    num_frames = min(fps * duration, 97)
 
     try:
         pipe = load_pipeline()
@@ -63,30 +73,24 @@ def handler(event):
         image = image.resize((width, height))
 
         output = pipe(
-            prompt=prompt,
             image=image,
+            prompt=prompt,
+            negative_prompt=inp.get("negative_prompt", ""),
             num_frames=num_frames,
-            width=width,
-            height=height,
             num_inference_steps=inp.get("steps", 30),
-            guidance_scale=inp.get("guidance_scale", 7.0),
+            guidance_scale=inp.get("guidance_scale", 6.0),
         )
 
-        # Export video frames to mp4
-        frames = output.frames[0]  # List of PIL Images
+        frames = output.frames[0]
 
         with tempfile.NamedTemporaryFile(suffix=".mp4", delete=False) as tmp:
             tmp_path = tmp.name
 
-        # Use imageio to write video
         import imageio
         import numpy as np
         writer = imageio.get_writer(tmp_path, fps=fps, codec="libx264")
         for frame in frames:
-            if hasattr(frame, "numpy"):
-                writer.append_data(np.array(frame))
-            else:
-                writer.append_data(np.array(frame))
+            writer.append_data(np.array(frame))
         writer.close()
 
         with open(tmp_path, "rb") as f:

@@ -10,6 +10,7 @@ RUN pip install --no-cache-dir \
     transformers \
     accelerate \
     safetensors \
+    sentencepiece \
     pillow \
     requests \
     imageio[ffmpeg] \
